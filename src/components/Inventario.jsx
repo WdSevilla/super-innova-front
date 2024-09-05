@@ -80,7 +80,7 @@ const Inventario = () => {
                     <td className="py-2 px-4">{producto.stock}</td>
                     <td className="py-2 px-4">{producto.id_categoria}</td>
                     <td className="py-2 px-4">
-                      {producto.porcentaje_ganancia}
+                      {producto.procentaje_ganancia}%
                     </td>
                     <td className="py-2 px-4">{producto.fecha_vencimiento}</td>
                     <td className="py-2 px-4">{producto.id_proveedor}</td>
