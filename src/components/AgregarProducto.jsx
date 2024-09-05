@@ -16,7 +16,7 @@ const AgregarProducto = () => {
     id_proveedor: "",
   });
 
-  const navigate = useNavigate(); // Para redirigir
+  const navigate = useNavigate(); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,18 +44,18 @@ const AgregarProducto = () => {
 
       console.log("Producto creado:", data);
 
-      // Mostrar alerta de éxito usando SweetAlert2
+     
       Swal.fire({
         title: 'Producto creado',
         text: 'El producto se ha creado correctamente.',
         icon: 'success',
         confirmButtonText: 'OK',
       }).then(() => {
-        // Redirigir a la pantalla anterior
-        navigate(-1); // Redirige a la página anterior
+      
+        navigate(-1); // Redirige a la página 
       });
 
-      // Resetear el formulario
+      // Resetea formulario
       setProduct({
         nombre: "",
         descripcion: "",
@@ -69,7 +69,7 @@ const AgregarProducto = () => {
     } catch (error) {
       console.error("Error al crear el producto:", error.message);
 
-      // Mostrar alerta de error usando SweetAlert2
+      //  alerta de error
       Swal.fire({
         title: 'Error',
         text: 'Hubo un error al crear el producto. Intenta nuevamente.',
