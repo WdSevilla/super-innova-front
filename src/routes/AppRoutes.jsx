@@ -8,6 +8,7 @@ import Clientes from '../components/Clientes';
 import Empleados from '../components/Empleados'
 import Facturas from '../components/Facturas';
 import AgregarProducto from '../components/AgregarProducto';
+import ActualizarProducto from '../components/ActualizarProducto';
 const AppRoutes = () => {
   return (
     <Routes>
@@ -18,6 +19,7 @@ const AppRoutes = () => {
       <Route path="/empleados" element={<Empleados />}/>
       <Route path="/facturas" element={<Facturas />}/>
       <Route path="/agregarproducto" element={<AgregarProducto/>} />
+      <Route path="/actualizarproducto/:id" element={<ActualizarProducto />} />
     </Routes>
   );
 };

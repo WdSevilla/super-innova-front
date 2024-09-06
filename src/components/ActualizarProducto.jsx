@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../utils/supaBaseClient";
 import SideBar from "./SideBar";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2"; // Importar SweetAlert2
 
-const AgregarProducto = () => {
+const EditarProducto = () => {
   const [product, setProduct] = useState({
     nombre: "",
     descripcion: "",
@@ -20,9 +20,24 @@ const AgregarProducto = () => {
   const [proveedores, setProveedores] = useState([]);
 
   const navigate = useNavigate();
+  const { id } = useParams(); // Obtener el ID del producto desde la URL
 
+  // Cargar datos actuales del producto
   useEffect(() => {
-    // Obtener categorías de la base de datos
+    const fetchProducto = async () => {
+      const { data, error } = await supabase
+        .from("productos")
+        .select("*")
+        .eq("id", id)
+        .single(); // Obtener un solo producto
+
+      if (error) {
+        console.error("Error al cargar el producto:", error.message);
+      } else {
+        setProduct(data); // Establecer los datos del producto en el estado
+      }
+    };
+
     const fetchCategorias = async () => {
       const { data, error } = await supabase.from("categorias").select("nombre");
       if (!error) {
@@ -32,7 +47,6 @@ const AgregarProducto = () => {
       }
     };
 
-    // Obtener proveedores de la base de datos
     const fetchProveedores = async () => {
       const { data, error } = await supabase.from("proveedores").select("nombre");
       if (!error) {
@@ -42,9 +56,10 @@ const AgregarProducto = () => {
       }
     };
 
+    fetchProducto();
     fetchCategorias();
     fetchProveedores();
-  }, []);
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,46 +74,30 @@ const AgregarProducto = () => {
     try {
       const { data, error } = await supabase
         .from("productos")
-        .insert([
-          {
-            ...product,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+        .update({
+          ...product,
+       
+        })
+        .eq("id", id);
 
       if (error) {
         throw error;
       }
 
-      console.log("Producto creado:", data);
-
       Swal.fire({
-        title: 'Producto creado',
-        text: 'El producto se ha creado correctamente.',
+        title: 'Producto actualizado',
+        text: 'El producto se ha actualizado correctamente.',
         icon: 'success',
         confirmButtonText: 'OK',
       }).then(() => {
         navigate(-1); // Redirige a la página anterior
       });
-
-      // Resetea el formulario
-      setProduct({
-        nombre: "",
-        descripcion: "",
-        precio: 0,
-        stock: 0,
-        id_categoria: "",
-        procentaje_ganancia: 0,
-        fecha_vencimiento: "",
-        id_proveedor: "",
-      });
     } catch (error) {
-      console.error("Error al crear el producto:", error.message);
+      console.error("Error al actualizar el producto:", error.message);
 
-      // Mostrar alerta de error
       Swal.fire({
         title: 'Error',
-        text: 'Hubo un error al crear el producto. Intenta nuevamente.',
+        text: 'Hubo un error al actualizar el producto. Intenta nuevamente.',
         icon: 'error',
         confirmButtonText: 'OK',
       });
@@ -248,7 +247,7 @@ const AgregarProducto = () => {
               type="submit"
               className="w-full py-2 px-4 bg-blue-500 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              Crear Producto
+              Actualizar Producto
             </button>
           </form>
         </div>
@@ -257,4 +256,4 @@ const AgregarProducto = () => {
   );
 };
 
-export default AgregarProducto;
+export default EditarProducto;
