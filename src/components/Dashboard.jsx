@@ -1,5 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import React from 'react';
+import BarraUsuario from './BarraUsuario';
 import { Link } from 'react-router-dom';
 import { useAuth } from './context/AuthContext'; // Importa el contexto de autenticación para obtener el rol del usuario
 
@@ -26,6 +27,8 @@ function Dashboard() {
   const menuItems = user.puesto === 'Administrador' ? menuItemsAdmin : menuItemsEmployee;
 
   return (
+    <>
+    <BarraUsuario/>
     <div className="min-h-screen bg-blue-500 flex flex-col items-center pt-10">
       <h1 className="text-white text-3xl mb-8">SUPER INNOVA</h1>
       <div className="grid grid-cols-3 gap-6">
@@ -41,6 +44,7 @@ function Dashboard() {
         ))}
       </div>
     </div>
+    </>
   );
 }
 

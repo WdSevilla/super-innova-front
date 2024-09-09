@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../utils/supaBaseClient'; // Importa supabase
 import SideBar from './SideBar';
-
+import BarraUsuario from './BarraUsuario';
 const Ventas = () => {
   const [productos, setProductos] = useState([]);
   const [producto, setProducto] = useState({ codigo: '', nombre: '', cantidad: 1, precio: 0, impuesto: 0 });
@@ -114,6 +114,8 @@ const procesarVenta = async () => {
   }
 };
   return (
+    <>
+    <BarraUsuario/>
     <div className="min-h-screen flex">
       <SideBar />
       <main className="flex-1 p-4">
@@ -219,6 +221,7 @@ const procesarVenta = async () => {
         </section>
       </main>
     </div>
+    </>
   );
 };
 
