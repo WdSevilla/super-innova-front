@@ -12,6 +12,7 @@ const AgregarProducto = () => {
     stock: 0,
     id_categoria: "",
     procentaje_ganancia: 0,
+    codigo_producto:0,
     fecha_vencimiento: "",
     id_proveedor: "",
   });
@@ -89,6 +90,7 @@ const AgregarProducto = () => {
         stock: 0,
         id_categoria: "",
         procentaje_ganancia: 0,
+        codigo_producto:0,
         fecha_vencimiento: "",
         id_proveedor: "",
       });
@@ -209,7 +211,21 @@ const AgregarProducto = () => {
                 className="mt-1 p-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
-
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Codigon del Producto
+              </label>
+              <input
+                type="number"
+                name="codigo_producto"
+                value={product.codigo_producto}
+                onChange={handleChange}
+                placeholder="Codigo de Producto"
+                step="0.01"
+                required
+                className="mt-1 p-2 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Fecha Vencimiento

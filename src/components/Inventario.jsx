@@ -11,7 +11,7 @@ const Inventario = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
+  const itemsPerPage = 6;
 
   const navigate = useNavigate();
 
@@ -29,6 +29,7 @@ const Inventario = () => {
         stock,
         id_categoria,
         procentaje_ganancia,
+        codigo_producto,
         fecha_vencimiento,
         id_proveedor,
       proveedores (
@@ -106,6 +107,7 @@ const Inventario = () => {
             <table className="min-w-full bg-white border border-gray-300">
               <thead className="bg-gray-200">
                 <tr>
+                <th className="py-2 px-4 text-left">Codigo</th>
                   <th className="py-2 px-4 text-left">Nombre</th>
                   <th className="py-2 px-4 text-left">Descripción</th>
                   <th className="py-2 px-4 text-left">Precio</th>
@@ -120,6 +122,7 @@ const Inventario = () => {
               <tbody>
                 {currentProducts.map((producto) => (
                   <tr key={producto.id} className="border-b border-gray-200">
+                    <td className="py-2 px-4">{producto.codigo_producto}</td>
                     <td className="py-2 px-4">{producto.nombre}</td>
                     <td className="py-2 px-4">{producto.descripcion}</td>
                     <td className="py-2 px-4">₡{producto.precio}</td>
@@ -128,7 +131,7 @@ const Inventario = () => {
                     <td className="py-2 px-4">{producto.procentaje_ganancia}%</td>
                     <td className="py-2 px-4">{producto.fecha_vencimiento}</td>
                     <td className="py-2 px-4">{producto.id_proveedor}</td>
-                    <td className="py-2 px-4">
+                    <td className="py-2 px-4 flex">
                       <button
                         className="bg-blue-500 text-white px-4 py-2 rounded mr-2 hover:bg-blue-600"
                         onClick={() => actualizarProducto(producto.id)}
