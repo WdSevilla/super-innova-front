@@ -14,15 +14,15 @@ const BarraUsuario = () => {
 
   return (
     <div className="bg-blue-600 text-white py-1 px-6 flex justify-between items-center">
-      {/* Mensaje de bienvenida */}
-      <h1 className="text-xl font-bold">Welcome, {user.nombre}</h1>
+    
+      <h1 className="text-xl font-bold">Bienvenido, {user.nombre}</h1>
 
-      {/* Botón de cerrar sesión */}
+    
       <button
         onClick={handleLogout}
         className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
       >
-        Log out
+       Cerrar Sesion
       </button>
     </div>
   );
