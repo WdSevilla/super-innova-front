@@ -65,10 +65,10 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Welcome back!</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Bienvenido a SuperInnova</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="form-group">
-            <label className="block text-sm font-medium text-gray-700">Username</label>
+            <label className="block text-sm font-medium text-gray-700">Usuario</label>
             <input
               type="text"
               placeholder="Enter your username"
