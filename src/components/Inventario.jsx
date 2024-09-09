@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../utils/supaBaseClient";
 import Swal from "sweetalert2";
 import SideBar from "./SideBar";
+import BarraUsuario from "./BarraUsuario";
 import AgregarCategoria from "./AgregarCategoria";
 import AgregarProveedor from "./AgregarProveedor";
 
@@ -88,6 +89,7 @@ const Inventario = () => {
 
   return (
     <>
+    <BarraUsuario/>
       <div className="min-h-screen flex">
         <SideBar />
         <div className="min-h-screen w-full bg-gray-100 p-6">
