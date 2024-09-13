@@ -1,139 +1,181 @@
-import React, { useState } from 'react';
-import { supabase } from '../utils/supaBaseClient'; // Importa supabase
-import SideBar from './SideBar';
-import BarraUsuario from './BarraUsuario';
+import React, { useState } from "react";
+import { supabase } from "../utils/supaBaseClient"; // Importa supabase
+import SideBar from "./SideBar";
+import BarraUsuario from "./BarraUsuario";
 
 const Ventas = () => {
   const [productos, setProductos] = useState([]);
-  const [producto, setProducto] = useState({ codigo: '', nombre: '', cantidad: 1, precio: 0 });
-  const [cliente, setCliente] = useState({ nombre: '', correo: '', cedula: '', telefono: '', direccion: '', razonSocial: '' });
+  const [producto, setProducto] = useState({
+    codigo: "",
+    nombre: "",
+    cantidad: 1,
+    precio: 0,
+  });
+  const [cliente, setCliente] = useState({
+    nombre: "",
+    correo: "",
+    cedula: "",
+    telefono: "",
+    direccion: "",
+    razonSocial: "",
+  });
   const [total, setTotal] = useState(0);
   const [productosSugeridos, setProductosSugeridos] = useState([]);
 
   // Filtrar productos por nombre
   const filtrarPorNombre = async (nombre) => {
     const { data, error } = await supabase
-      .from('productos')
-      .select('codigo_producto, nombre, precio, id')
-      .ilike('nombre', `%${nombre}%`);
+      .from("productos")
+      .select("codigo_producto, nombre, precio, id")
+      .ilike("nombre", `%${nombre}%`);
 
     if (error) {
-      console.error('Error buscando productos por nombre:', error);
+      console.error("Error buscando productos por nombre:", error);
     } else {
       setProductosSugeridos(data);
     }
   };
 
+
+  const filtrarPorCodigo = async (codigo) => {
+    const codigoNumero = parseFloat(codigo);
+  
+    const { data, error } = await supabase
+      .from('productos')
+      .select('codigo_producto, nombre, precio, id')
+      .eq('codigo_producto', codigoNumero);
+  
+    if (error) {
+      console.error('Error buscando productos por código:', error);
+      return { data: [], error };
+    }
+  // Si hay exactamente un producto encontrado, seleccionarlo automáticamente
+      if (data.length === 1) {
+        seleccionarProducto(data[0]);
+      }
+    return { data };
+  };
+  
+
+
+
   // Filtrar productos por código
-// Filtrar productos por código si es numérico
-// Filtrar productos por código si es numérico
-const filtrarPorCodigo = async (codigo) => {
-  // Verifica el valor de código
-  console.log('Buscando código:', codigo);
+  // const filtrarPorCodigo = async (codigo) => {
+  //   // Convierte el código a número entero
+  //   const codigoNumero = parseFloat(codigo);
 
-  // Convierte el código a número entero
-  const codigoNumero = parseFloat(codigo);
+  //   const { data, error } = await supabase
+  //     .from("productos")
+  //     .select("codigo_producto, nombre, precio, id")
+  //     .eq("codigo_producto", codigoNumero);
 
-  // Realiza la consulta con `eq`
-  const { data, error } = await supabase
-    .from('productos')
-    .select('codigo_producto, nombre, precio, id')
-    .eq('codigo_producto', codigoNumero);  // Usar `eq` para comparación exacta
+  //   if (error) {
+  //     console.error("Error buscando productos por código:", error);
+  //   } else {
+  //     setProductosSugeridos(data);
 
-  if (error) {
-    console.error('Error buscando productos por código:', error);
-  } else {
-    console.log('Productos encontrados:', data); // Verifica los resultados
-    setProductosSugeridos(data);
-  }
-};
-
+  //     // Si hay exactamente un producto encontrado, seleccionarlo automáticamente
+  //     if (data.length === 1) {
+  //       seleccionarProducto(data[0]);
+  //     }
+  //   }
+  // };
 
   // Manejar cambios en los campos de producto
-const handleProductoChange = async (e) => {
-  const { name, value } = e.target;
-  setProducto({ ...producto, [name]: value });
+  const handleProductoChange = async (e) => {
+    const { name, value } = e.target;
+    setProducto({ ...producto, [name]: value });
 
-  if (value.length > 0) {
-    if (name === 'nombre') {
-      await filtrarPorNombre(value);
-    } else if (name === 'codigo') {
-      // Verifica que el código ingresado sea un número válido
-      const codigoNumero = parseFloat(value);
-      if (!isNaN(codigoNumero)) {
-        await filtrarPorCodigo(value);
-      } else {
-        console.log('El código ingresado no es válido');
-        setProductosSugeridos([]); // Limpiar sugerencias si el código no es válido
+    if (value.length > 0) {
+      if (name === "nombre") {
+        await filtrarPorNombre(value);
+      } else if (name === "codigo") {
+        const codigoNumero = parseFloat(value);
+        if (!isNaN(codigoNumero)) {
+          await filtrarPorCodigo(value);
+        } else {
+          console.log("El código ingresado no es válido");
+          setProductosSugeridos([]); // Limpiar sugerencias si el código no es válido
+        }
       }
+    } else {
+      setProductosSugeridos([]); // Limpiar sugerencias si no hay búsqueda
     }
-
-    // Si estamos buscando por código y solo hay un producto, seleccionarlo automáticamente
-    if (name === 'codigo' && productosSugeridos.length === 1) {
-      seleccionarProducto(productosSugeridos[0]);
-    }
-  } else {
-    setProductosSugeridos([]); // Limpiar sugerencias si no hay búsqueda
-  }
-};
-
+  };
 
   // Agregar producto a la tabla
   const agregarProducto = () => {
-    // Verificar si el producto ya está en la lista usando el código del producto
-    const productoExistente = productos.find((prod) => prod.codigo === producto.codigo);
-  
+    const productoExistente = productos.find(
+      (prod) => prod.codigo === producto.codigo
+    );
+
     if (productoExistente) {
-      // Si el producto ya está, incrementar la cantidad
       const productosActualizados = productos.map((prod) => {
         if (prod.codigo === producto.codigo) {
           return {
             ...prod,
-            cantidad: prod.cantidad + producto.cantidad, // Incrementar la cantidad
-            subtotal: (prod.cantidad + producto.cantidad) * prod.precio // Actualizar el subtotal
+            cantidad: prod.cantidad + producto.cantidad,
+            subtotal: (prod.cantidad + producto.cantidad) * prod.precio,
           };
         }
         return prod;
       });
-  
+
       setProductos(productosActualizados);
     } else {
-      // Si el producto no está, agregar uno nuevo
-      const nuevoProducto = { ...producto, subtotal: producto.cantidad * producto.precio };
+      const nuevoProducto = {
+        ...producto,
+        subtotal: producto.cantidad * producto.precio,
+      };
       setProductos([...productos, nuevoProducto]);
     }
-  
-    // Calcular el nuevo total
-    const nuevoTotal = productos.reduce((acc, prod) => acc + prod.subtotal, 0) + producto.cantidad * producto.precio;
+
+    const nuevoTotal =
+      productos.reduce((acc, prod) => acc + prod.subtotal, 0) +
+      producto.cantidad * producto.precio;
     setTotal(nuevoTotal);
+
+    setProducto({ codigo: "", nombre: "", cantidad: 1, precio: 0 });
+    setProductosSugeridos([]);
+  };
+  const handleCodigoKeyDown = async (e) => {
+    if (e.key === 'Enter') {
+      // Realizar la consulta para encontrar el producto por código
+      const { data: productosEncontrados } = await filtrarPorCodigo(producto.codigo);
   
-    // Limpiar el input de producto
-    setProducto({ codigo: '', nombre: '', cantidad: 1, precio: 0 });
-    setProductosSugeridos([]); // Limpiar sugerencias después de agregar el producto
+      // Verificar si hay productos encontrados directamente de la consulta
+      if (productosEncontrados && productosEncontrados.length > 0) {
+        // Seleccionar el primer producto encontrado y agregarlo
+        seleccionarProducto(productosEncontrados[0]);
+        agregarProducto(); // Agregar el producto a la venta
+      } else {
+        console.log("No hay un producto exacto para agregar");
+      }
+    }
   };
   
 
-  // Cuando el usuario selecciona un producto de la lista sugerida o automáticamente por código
+  // Seleccionar producto de la lista sugerida
   const seleccionarProducto = (productoSeleccionado) => {
     setProducto({
       nombre: productoSeleccionado.nombre,
-      codigo: productoSeleccionado.codigo_producto, // Actualizamos el campo de código
+      codigo: productoSeleccionado.codigo_producto,
       precio: productoSeleccionado.precio,
-      cantidad: 1, // Por defecto 1 unidad
+      cantidad: 1,
     });
-    setProductosSugeridos([]); // Limpiar las sugerencias al seleccionar un producto
+    setProductosSugeridos([]);
   };
 
   // Procesar la venta
   const procesarVenta = async () => {
     try {
       const { data: venta, error: ventaError } = await supabase
-        .from('ventas')
+        .from("ventas")
         .insert([
           {
             fecha: new Date().toISOString(),
-            id_cliente: cliente.id_cliente, // Reemplaza con el ID real del cliente
-            id_empleado: cliente.id_empleado, // ID del empleado que está realizando la venta
+            id_cliente: cliente.id_cliente,
+            id_empleado: cliente.id_empleado,
             total: total,
           },
         ])
@@ -143,11 +185,11 @@ const handleProductoChange = async (e) => {
 
       const detalleVentaPromises = productos.map(async (prod) => {
         const { error: detalleVentaError } = await supabase
-          .from('detalle_ventas')
+          .from("detalle_ventas")
           .insert([
             {
-              venta_id: venta.id,  // ID de la venta que acabamos de insertar
-              producto_id: prod.codigo,  // ID del producto vendido
+              venta_id: venta.id,
+              producto_id: prod.codigo,
               cantidad: prod.cantidad,
               precio_unitario: prod.precio,
             },
@@ -156,14 +198,13 @@ const handleProductoChange = async (e) => {
         if (detalleVentaError) throw detalleVentaError;
       });
 
-      await Promise.all(detalleVentaPromises);  // Esperar a que todas las inserciones de detalle de ventas terminen
-
-      alert('Venta procesada con éxito');
+      await Promise.all(detalleVentaPromises);
+      alert("Venta procesada con éxito");
       setProductos([]);
       setTotal(0);
     } catch (error) {
-      console.error('Error al procesar la venta:', error.message);
-      alert('Hubo un error al procesar la venta.');
+      console.error("Error al procesar la venta:", error.message);
+      alert("Hubo un error al procesar la venta.");
     }
   };
 
@@ -174,7 +215,6 @@ const handleProductoChange = async (e) => {
         <SideBar />
         <main className="flex-1 p-4">
           <section className="mb-4">
-            {/* Formulario de datos del cliente */}
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block">Cliente</label>
@@ -182,7 +222,9 @@ const handleProductoChange = async (e) => {
                   type="text"
                   name="nombre"
                   value={cliente.nombre}
-                  onChange={(e) => setCliente({ ...cliente, nombre: e.target.value })}
+                  onChange={(e) =>
+                    setCliente({ ...cliente, nombre: e.target.value })
+                  }
                   className="w-full border p-2"
                   placeholder="Nombre del cliente"
                 />
@@ -190,7 +232,6 @@ const handleProductoChange = async (e) => {
             </div>
           </section>
 
-          {/* Sección de productos */}
           <section>
             <h2 className="text-xl mb-4">Agregar Producto</h2>
             <div className="grid grid-cols-5 gap-4">
@@ -199,6 +240,7 @@ const handleProductoChange = async (e) => {
                 name="codigo"
                 value={producto.codigo}
                 onChange={handleProductoChange}
+                onKeyDown={handleCodigoKeyDown} // Detecta la tecla "Enter"
                 placeholder="Código del producto"
                 className="border p-2"
               />
@@ -214,7 +256,9 @@ const handleProductoChange = async (e) => {
                 type="number"
                 name="cantidad"
                 value={producto.cantidad}
-                onChange={(e) => setProducto({ ...producto, cantidad: e.target.value })}
+                onChange={(e) =>
+                  setProducto({ ...producto, cantidad: e.target.value })
+                }
                 placeholder="Cantidad"
                 className="border p-2"
                 min="1"
@@ -223,17 +267,21 @@ const handleProductoChange = async (e) => {
                 type="number"
                 name="precio"
                 value={producto.precio}
-                onChange={(e) => setProducto({ ...producto, precio: e.target.value })}
+                onChange={(e) =>
+                  setProducto({ ...producto, precio: e.target.value })
+                }
                 placeholder="Precio"
                 className="border p-2"
                 min="0"
               />
-              <button className="bg-blue-500 text-white py-2 px-4" onClick={agregarProducto}>
+              <button
+                className="bg-blue-500 text-white py-2 px-4"
+                onClick={agregarProducto}
+              >
                 Agregar
               </button>
             </div>
 
-            {/* Mostrar sugerencias de productos cuando se escribe en el campo nombre o código */}
             {productosSugeridos.length > 0 && (
               <ul className="border border-gray-300 mt-2">
                 {productosSugeridos.map((productoSugerido) => (
@@ -242,13 +290,13 @@ const handleProductoChange = async (e) => {
                     className="p-2 cursor-pointer hover:bg-gray-200"
                     onClick={() => seleccionarProducto(productoSugerido)}
                   >
-                    {productoSugerido.nombre} - {productoSugerido.codigo_producto}
+                    {productoSugerido.nombre} -{" "}
+                    {productoSugerido.codigo_producto}
                   </li>
                 ))}
               </ul>
             )}
 
-            {/* Tabla de productos agregados */}
             <table className="w-full border-collapse border border-gray-300 mt-4">
               <thead>
                 <tr>
@@ -264,19 +312,31 @@ const handleProductoChange = async (e) => {
                 {productos.map((producto, index) => (
                   <tr key={index}>
                     <td className="border border-gray-300 p-2">{index + 1}</td>
-                    <td className="border border-gray-300 p-2">{producto.codigo}</td>
-                    <td className="border border-gray-300 p-2">{producto.nombre}</td>
-                    <td className="border border-gray-300 p-2">{producto.cantidad}</td>
-                    <td className="border border-gray-300 p-2">{producto.precio}</td>
-                    <td className="border border-gray-300 p-2">{producto.subtotal.toFixed(2)}</td>
+                    <td className="border border-gray-300 p-2">
+                      {producto.codigo}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {producto.nombre}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {producto.cantidad}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {producto.precio}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {producto.subtotal.toFixed(2)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
 
-            {/* Mostrar total */}
             <h2 className="text-xl mt-4">Total: {total.toFixed(2)}</h2>
-            <button className="mt-4 bg-green-500 text-white py-2 px-4" onClick={procesarVenta}>
+            <button
+              className="mt-4 bg-green-500 text-white py-2 px-4"
+              onClick={procesarVenta}
+            >
               Procesar Venta
             </button>
           </section>
@@ -287,8 +347,6 @@ const handleProductoChange = async (e) => {
 };
 
 export default Ventas;
-
-
 
 // import React, { useState } from 'react';
 // import { supabase } from '../utils/supaBaseClient'; // Importa supabase
@@ -347,8 +405,6 @@ export default Ventas;
 //     });
 //     setProductosSugeridos([]); // Limpiar las sugerencias al seleccionar un producto
 //   };
-
-
 
 //     // Cuando el usuario selecciona un cliente de la lista sugerida
 //     const seleccionarCliente = (ClienteSeleccionado) => {
