@@ -215,6 +215,54 @@ const Ventas = () => {
     }
   };
 
+  const eliminarProducto = (index) => {
+    const productosActualizados = productos.filter((_, i) => i !== index);
+    setProductos(productosActualizados);
+  
+    const nuevoTotal = productosActualizados.reduce(
+      (acc, prod) => acc + prod.subtotal,
+      0
+    );
+    setTotal(nuevoTotal);
+  };
+  const eliminarFila = (index) => {
+    const productosActualizados = productos.filter((_, i) => i !== index);
+    setProductos(productosActualizados);
+  
+    const nuevoTotal = productosActualizados.reduce(
+      (acc, prod) => acc + prod.subtotal,
+      0
+    );
+    setTotal(nuevoTotal);
+  };
+  const disminuirCantidad = (index) => {
+    const productoSeleccionado = productos[index];
+  
+    if (productoSeleccionado.cantidad > 1) {
+      const productosActualizados = productos.map((prod, i) => {
+        if (i === index) {
+          const nuevaCantidad = prod.cantidad - 1;
+          return {
+            ...prod,
+            cantidad: nuevaCantidad,
+            subtotal: nuevaCantidad * prod.precio,
+          };
+        }
+        return prod;
+      });
+  
+      setProductos(productosActualizados);
+  
+      const nuevoTotal = productosActualizados.reduce(
+        (acc, prod) => acc + prod.subtotal,
+        0
+      );
+      setTotal(nuevoTotal);
+    } else {
+      eliminarFila(index); // Si la cantidad es 1, se elimina el producto
+    }
+  };
+  
   return (
     <>
       <BarraUsuario />
@@ -239,116 +287,146 @@ const Ventas = () => {
             </div>
           </section>
 
-          <section>
-            <h2 className="text-xl mb-4">Agregar Producto</h2>
-            <div className="grid grid-cols-5 gap-4">
-              <input
-                type="number"
-                name="codigo"
-                value={producto.codigo}
-                onChange={handleProductoChange}
-                onKeyDown={handleCodigoKeyDown} // Detecta la tecla "Enter"
-                placeholder="Código del producto"
-                className="border p-2"
-              />
-              <input
-                type="text"
-                name="nombre"
-                value={producto.nombre}
-                onChange={handleProductoChange}
-                placeholder="Nombre del producto"
-                className="border p-2"
-              />
-              <input
-                type="number"
-                name="cantidad"
-                value={producto.cantidad}
-                onChange={(e) =>
-                  setProducto({ ...producto, cantidad: e.target.value })
-                }
-                placeholder="Cantidad"
-                className="border p-2"
-                min="1"
-              />
-              <input
-                type="number"
-                name="precio"
-                value={producto.precio}
-                onChange={(e) =>
-                  setProducto({ ...producto, precio: e.target.value })
-                }
-                placeholder="Precio"
-                className="border p-2"
-                min="0"
-              />
-              <button
-                className="bg-blue-500 text-white py-2 px-4"
-                onClick={agregarProducto}
-              >
-                Agregar
-              </button>
-            </div>
+<section>
+  <h2 className="text-xl mb-4">Agregar Producto</h2>
+  <div className="grid grid-cols-5 gap-4">
+    {/* Código y nombre del producto */}
+    <input
+      type="number"
+      name="codigo"
+      value={producto.codigo}
+      onChange={handleProductoChange}
+      onKeyDown={handleCodigoKeyDown}
+      placeholder="Código del producto"
+      className="border p-2"
+    />
+    <input
+      type="text"
+      name="nombre"
+      value={producto.nombre}
+      onChange={handleProductoChange}
+      placeholder="Nombre del producto"
+      className="border p-2"
+    />
+    {/* Cantidad y precio */}
+    <input
+      type="number"
+      name="cantidad"
+      value={producto.cantidad}
+      onChange={(e) =>
+        setProducto({ ...producto, cantidad: e.target.value })
+      }
+      placeholder="Cantidad"
+      className="border p-2"
+      min="1"
+    />
+    <input
+      type="number"
+      name="precio"
+      value={producto.precio}
+      onChange={(e) =>
+        setProducto({ ...producto, precio: e.target.value })
+      }
+      placeholder="Precio"
+      className="border p-2"
+      min="0"
+    />
+    {/* Botón agregar producto */}
+    <button
+      className="bg-blue-500 text-white py-2 px-4"
+      onClick={agregarProducto}
+    >
+      Agregar
+    </button>
+  </div>
 
-            {productosSugeridos.length > 0 && (
-              <ul className="border border-gray-300 mt-2">
-                {productosSugeridos.map((productoSugerido) => (
-                  <li
-                    key={productoSugerido.id}
-                    className="p-2 cursor-pointer hover:bg-gray-200"
-                    onClick={() => seleccionarProducto(productoSugerido)}
-                  >
-                    {productoSugerido.nombre} -{" "}
-                    {productoSugerido.codigo_producto}
-                  </li>
-                ))}
-              </ul>
-            )}
+  {/* Lista de productos sugeridos */}
+  {productosSugeridos.length > 0 && (
+    <ul className="border border-gray-300 mt-2">
+      {productosSugeridos.map((productoSugerido) => (
+        <li
+          key={productoSugerido.id}
+          className="p-2 cursor-pointer hover:bg-gray-200"
+          onClick={() => seleccionarProducto(productoSugerido)}
+        >
+          {productoSugerido.nombre} - {productoSugerido.codigo_producto}
+        </li>
+      ))}
+    </ul>
+  )}
 
-            {/* Detalle de la venta */}
-            <table className="w-full border-collapse border border-gray-300 mt-4">
-              <thead>
-                <tr>
-                  <th className="border border-gray-300 p-2">#</th>
-                  <th className="border border-gray-300 p-2">Código</th>
-                  <th className="border border-gray-300 p-2">Nombre</th>
-                  <th className="border border-gray-300 p-2">Cantidad</th>
-                  <th className="border border-gray-300 p-2">Precio</th>
-                  <th className="border border-gray-300 p-2">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                {productos.map((producto, index) => (
-                  <tr key={index}>
-                    <td className="border border-gray-300 p-2">{index + 1}</td>
-                    <td className="border border-gray-300 p-2">
-                      {producto.codigo}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {producto.nombre}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {producto.cantidad}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {producto.precio.toFixed(2)}
-                    </td>
-                    <td className="border border-gray-300 p-2">
-                      {producto.subtotal.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+  {/* Detalle de la venta */}
+  <table className="w-full border-collapse border border-gray-300 mt-4">
+    <thead>
+      <tr>
+        <th className="border border-gray-300 p-2">#</th>
+        <th className="border border-gray-300 p-2">Código</th>
+        <th className="border border-gray-300 p-2">Nombre</th>
+        <th className="border border-gray-300 p-2">Cantidad</th>
+        <th className="border border-gray-300 p-2">Precio</th>
+        <th className="border border-gray-300 p-2">Subtotal</th>
+        <th className="border border-gray-300 p-2">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+  {productos.map((producto, index) => (
+    <tr key={index}>
+      <td className="border border-gray-300 p-2">{index + 1}</td>
+      <td className="border border-gray-300 p-2">{producto.codigo}</td>
+      <td className="border border-gray-300 p-2">{producto.nombre}</td>
+      <td className="border border-gray-300 p-2">{producto.cantidad}</td>
+      <td className="border border-gray-300 p-2">{producto.precio.toFixed(2)}</td>
+      <td className="border border-gray-300 p-2">{producto.subtotal.toFixed(2)}</td>
+      <td className="border border-gray-300 p-2">
+        <button
+          className="bg-yellow-500 text-white px-2 py-1 mr-2"
+          onClick={() => disminuirCantidad(index)}
+        >
+          Eliminar
+        </button>
+        <button
+          className="bg-red-500 text-white px-2 py-1"
+          onClick={() => eliminarFila(index)}
+        >
+          Eliminar fila
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
 
-            <h2 className="text-xl mt-4">Total: {total.toFixed(2)}</h2>
+  </table>
 
-            <button
-              className="bg-green-500 text-white py-2 px-4 mt-4"
-              onClick={procesarVenta}
-            >
-              Procesar Venta
-            </button>
-          </section>
+  <h2 className="text-xl mt-4">Total: {total.toFixed(2)}</h2>
+
+
+  <button
+    className="bg-red-500 text-white py-2 px-4 mt-4"
+    onClick={() => {
+      setProductos([]);  
+      setCliente({
+        nombre: "",
+        correo: "",
+        cedula: "",
+        telefono: "",
+        direccion: "",
+        razonSocial: "",
+      });
+      setTotal(0); 
+      setProducto({ codigo: "", nombre: "", cantidad: 1, precio: 0 });
+    }}
+  >
+    Limpiar Venta
+  </button>
+
+  <button
+    className="bg-green-500 text-white py-2 px-4 mt-4"
+    onClick={procesarVenta}
+  >
+    Procesar Venta
+  </button>
+</section>
+
         </main>
       </div>
     </>
