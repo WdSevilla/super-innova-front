@@ -12,6 +12,7 @@ const Inventario = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState(""); // Estado para el término de búsqueda
   const itemsPerPage = 6;
 
   const navigate = useNavigate();
@@ -72,24 +73,30 @@ const Inventario = () => {
 
   // Redirigir a la página de edición con los datos del producto
   const actualizarProducto = (id) => {
-     navigate(`/actualizarproducto/${id}`); // Redirigir al componente de edición
+    navigate(`/actualizarproducto/${id}`); // Redirigir al componente de edición
   };
+
+  // Filtrar productos
+  const filteredProducts = productos.filter((producto) => {
+    const nombreProducto = producto?.nombre?.toLowerCase() || "";
+    return nombreProducto.includes(searchTerm.toLowerCase());
+  });
 
   // Paginación
   const indexOfLastProduct = currentPage * itemsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - itemsPerPage;
-  const currentProducts = productos.slice(indexOfFirstProduct, indexOfLastProduct);
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   if (loading) return <div>Cargando...</div>;
   if (error) return <div>{error}</div>;
 
-  const totalPages = Math.ceil(productos.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   return (
     <>
-    <BarraUsuario/>
+      <BarraUsuario />
       <div className="min-h-screen flex">
         <SideBar />
         <div className="min-h-screen w-full bg-gray-100 p-6">
@@ -105,11 +112,20 @@ const Inventario = () => {
               <AgregarProveedor />
             </button>
           </div>
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Buscar por nombre del producto"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="p-2 border border-gray-300 rounded w-3/4"
+            />
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-300">
               <thead className="bg-gray-200">
                 <tr>
-                <th className="py-2 px-4 text-left">Codigo</th>
+                  <th className="py-2 px-4 text-left">Codigo</th>
                   <th className="py-2 px-4 text-left">Nombre</th>
                   <th className="py-2 px-4 text-left">Descripción</th>
                   <th className="py-2 px-4 text-left">Precio</th>
