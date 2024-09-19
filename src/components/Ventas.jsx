@@ -12,12 +12,13 @@ const Ventas = () => {
     precio: 0,
   });
   const [cliente, setCliente] = useState({
-    nombre: "",
-    correo: "",
-    cedula: "",
-    telefono: "",
-    direccion: "",
-    razonSocial: "",
+    id_cliente:0,
+  });
+  const [detalle, setDetalle]= useState({
+    venta_id:0,
+    producto_id:0,
+    cantidad:0,
+    precio_initario:0,
   });
   const [total, setTotal] = useState(0);
   const [productosSugeridos, setProductosSugeridos] = useState([]);
@@ -35,6 +36,25 @@ const Ventas = () => {
       setProductosSugeridos(data);
     }
   };
+
+ 
+ // Filtrar por id Cliente
+ const filtrarPorId = async (id) => {
+  const codigoId = parseFloat(id);
+
+  const { data, error } = await supabase
+    .from('clientes')
+    .select('id')
+    .eq('id', codigoId);
+
+  if (error) {
+    console.error('Error buscando productos por código:', error);
+    return { data: [], error };
+  }
+
+  return { data };
+};
+
 
   // Filtrar productos por código
   const filtrarPorCodigo = async (codigo) => {
@@ -190,15 +210,12 @@ const Ventas = () => {
 
       if (ventaError) throw ventaError;
 
-      const detalleVentaPromises = productos.map(async (prod) => {
+      const detalleVentaPromises = detalle.map(async (prod) => {
         const { error: detalleVentaError } = await supabase
           .from("detalle_ventas")
           .insert([
             {
-              venta_id: venta.id,
-              producto_id: prod.codigo,
-              cantidad: prod.cantidad,
-              precio_unitario: prod.precio,
+              venta_id: ventas.id
             },
           ]);
 
@@ -215,16 +232,7 @@ const Ventas = () => {
     }
   };
 
-  const eliminarProducto = (index) => {
-    const productosActualizados = productos.filter((_, i) => i !== index);
-    setProductos(productosActualizados);
-  
-    const nuevoTotal = productosActualizados.reduce(
-      (acc, prod) => acc + prod.subtotal,
-      0
-    );
-    setTotal(nuevoTotal);
-  };
+
   const eliminarFila = (index) => {
     const productosActualizados = productos.filter((_, i) => i !== index);
     setProductos(productosActualizados);
@@ -274,11 +282,11 @@ const Ventas = () => {
               <div>
                 <label className="block">Cliente</label>
                 <input
-                  type="text"
-                  name="nombre"
-                  value={cliente.nombre}
+                  type="number"
+                  name="id"
+                  value={cliente.id_cliente}
                   onChange={(e) =>
-                    setCliente({ ...cliente, nombre: e.target.value })
+                    setCliente({ ...cliente, id_cliente: e.target.value })
                   }
                   className="w-full border p-2"
                   placeholder="Nombre del cliente"
@@ -315,6 +323,7 @@ const Ventas = () => {
       value={producto.cantidad}
       onChange={(e) =>
         setProducto({ ...producto, cantidad: e.target.value })
+      
       }
       placeholder="Cantidad"
       className="border p-2"
