@@ -210,12 +210,12 @@ const Ventas = () => {
 
       if (ventaError) throw ventaError;
 
-      const detalleVentaPromises = detalle.map(async (prod) => {
+      const detalleVentaPromises = productos.map(async (prod) => {
         const { error: detalleVentaError } = await supabase
           .from("detalle_ventas")
           .insert([
             {
-              venta_id: ventas.id
+              venta_id: venta.id
             },
           ]);
 
