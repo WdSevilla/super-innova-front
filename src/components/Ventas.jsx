@@ -85,6 +85,55 @@ const Ventas = () => {
     return productoData.length > 0 ? productoData[0] : null;
   };
 
+  const handleProcesarVenta = async () => {
+    // Datos de la venta general
+    const ventaData = {
+        fecha: new Date(),
+        nombre_cliente: clienteSeleccionado,
+        id_empleado: empleadoSesion, // Obtener el ID del empleado de la sesión actual
+        total: calcularTotal(), // Función que suma el total de la venta
+    };
+
+    // Insertar la venta en la tabla 'ventas' y obtener el 'venta_id'
+    const { data: ventaInsertada, error } = await supabase
+        .from('ventas')
+        .insert([ventaData])
+        .select('id')
+        .single();
+
+    if (error) {
+        console.error('Error al crear la venta:', error);
+        return;
+    }
+
+    const ventaId = ventaInsertada.id;
+
+    // Llamar a la función para registrar los detalles de la venta
+    registrarDetallesVenta(ventaId);
+};
+
+const registrarDetallesVenta = async (ventaId) => {
+  // Supongamos que 'productosEnCarrito' es un array con los productos seleccionados
+  const detalles = productosEnCarrito.map(producto => ({
+      venta_id: ventaId,
+      producto_id: producto.id, // ID del producto
+      cantidad: producto.cantidad, // Cantidad ingresada por el usuario
+      precio_unitario: producto.precio, // Precio del producto
+      created_at: new Date() // Fecha actual
+  }));
+
+  const { error } = await supabase
+      .from('detalle_ventas')
+      .insert(detalles);
+
+  if (error) {
+      console.error('Error al crear los detalles de la venta:', error);
+  } else {
+      console.log('Detalles de venta registrados con éxito');
+  }
+};
+
+
   // Manejar cambios en los campos de producto
   const handleProductoChange = async (e) => {
     const { name, value } = e.target;
@@ -193,7 +242,6 @@ const Ventas = () => {
     setProductosSugeridos([]);
   };
 
-  // Procesar la venta
   const procesarVenta = async () => {
     try {
       const { data: venta, error: ventaError } = await supabase
@@ -202,26 +250,34 @@ const Ventas = () => {
           {
             fecha: new Date().toISOString(),
             id_cliente: cliente.id_cliente,
-            id_empleado: cliente.id_empleado,
+            id_empleado: cliente.id_empleado,  
             total: total,
           },
         ])
+        .select()
         .single();
-
+  
       if (ventaError) throw ventaError;
-
+  
+      if (!venta || !venta.id) {
+        throw new Error("No se pudo obtener el ID de la venta");
+      }
+  
       const detalleVentaPromises = productos.map(async (prod) => {
         const { error: detalleVentaError } = await supabase
-          .from("detalle_ventas")
+          .from("detalles_ventas")
           .insert([
             {
-              venta_id: venta.id
+              venta_id: venta.id,
+              producto_id: prod.id,
+              cantidad: prod.cantidad,
+              precio_unitario: prod.precio,
             },
           ]);
-
+  
         if (detalleVentaError) throw detalleVentaError;
       });
-
+  
       await Promise.all(detalleVentaPromises);
       alert("Venta procesada con éxito");
       setProductos([]);
@@ -231,6 +287,9 @@ const Ventas = () => {
       alert("Hubo un error al procesar la venta.");
     }
   };
+  
+  
+  
 
 
   const eliminarFila = (index) => {
