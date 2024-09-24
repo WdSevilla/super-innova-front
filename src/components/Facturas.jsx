@@ -4,40 +4,47 @@ import { supabase } from "../utils/supaBaseClient"; // asegúrate de importar tu
 
 const Facturas = () => {
   const [facturas, setFacturas] = useState([]);
-  const [detallesFactura, setDetallesFactura] = useState(null); // Almacena los detalles de la factura seleccionada
-  const [cliente, setCliente] = useState(""); // Almacena el nombre del cliente
-  const [facturaSeleccionada, setFacturaSeleccionada] = useState(null); // Factura seleccionada
+  const [detallesFactura, setDetallesFactura] = useState(null);
+  const [cliente, setCliente] = useState("");
+  const [facturaSeleccionada, setFacturaSeleccionada] = useState(null);
+  const [paginaActual, setPaginaActual] = useState(1); // Paginación
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [mostrarModal, setMostrarModal] = useState(false);
 
   useEffect(() => {
-    // Función para obtener las facturas desde Supabase
+    // Función para obtener las facturas desde Supabase con paginación
     const fetchFacturas = async () => {
+      const limite = 6; // Mostrar 6 facturas por página
+      const desde = (paginaActual - 1) * limite;
+
       try {
-        const { data, error } = await supabase
+        const { data, error, count } = await supabase
           .from("ventas")
-          .select("id, nombre_cliente, fecha, total");
+          .select("id, nombre_cliente, fecha, total", { count: "exact" })
+          .order("fecha", { ascending: false })
+          .range(desde, desde + limite - 1);
 
         if (error) throw error;
         setFacturas(data);
+        setTotalPaginas(Math.ceil(count / limite)); // Calcular el total de páginas
       } catch (error) {
         console.error("Error fetching facturas:", error);
       }
     };
 
     fetchFacturas();
-  }, []);
+  }, [paginaActual]);
 
   // Función para obtener los detalles de la factura seleccionada
   const verDetallesFactura = async (facturaId) => {
     try {
-      // Obtener los detalles de la factura con el nombre del producto
       const { data: detalles, error: detallesError } = await supabase
         .from("detalles_ventas")
         .select("producto_id, cantidad, precio_unitario, productos (nombre)")
-        .eq("venta_id", facturaId); // La relación 'productos' debe estar definida en Supabase
+        .eq("venta_id", facturaId);
 
       if (detallesError) throw detallesError;
 
-      // Obtener la información del cliente
       const { data: facturaInfo, error: facturaError } = await supabase
         .from("ventas")
         .select("nombre_cliente")
@@ -46,13 +53,17 @@ const Facturas = () => {
 
       if (facturaError) throw facturaError;
 
-      setCliente(facturaInfo.nombre_cliente); // Almacenar nombre del cliente
-      setDetallesFactura(detalles); // Almacenar los detalles de la factura
-      setFacturaSeleccionada(facturaId); // Marcar factura seleccionada
+      setCliente(facturaInfo.nombre_cliente);
+      setDetallesFactura(detalles);
+      setFacturaSeleccionada(facturaId);
+      setMostrarModal(true); // Mostrar el modal
     } catch (error) {
       console.error("Error fetching factura details:", error);
     }
   };
+
+  // Cerrar el modal
+  const cerrarModal = () => setMostrarModal(false);
 
   return (
     <div className="min-h-screen flex">
@@ -96,42 +107,68 @@ const Facturas = () => {
           </table>
         </div>
 
-        {/* Mostrar los detalles de la factura seleccionada */}
-        {detallesFactura && (
-          <div className="mt-6 bg-white p-6 rounded shadow-md">
-            <h3 className="text-xl font-bold mb-4">
-              Detalles de la Factura #{facturaSeleccionada}
-            </h3>
-            <p className="mb-2">
-              <strong>Cliente:</strong> {cliente}
-            </p>
-            <table className="min-w-full bg-white border border-gray-300">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="py-2 px-4 text-left">Producto ID</th>
-                  <th className="py-2 px-4 text-left">Producto</th>
-                  <th className="py-2 px-4 text-left">Cantidad</th>
-                  <th className="py-2 px-4 text-left">Precio Unitario</th>
-                  <th className="py-2 px-4 text-left">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detallesFactura.map((detalle, index) => (
-                  <tr key={index} className="border-b border-gray-200">
-                    <td className="py-2 px-4">{detalle.producto_id}</td>
-                    <td className="py-2 px-4">{detalle.productos.nombre}</td>
-                    {/* Mostrar el nombre del producto */}
-                    <td className="py-2 px-4">{detalle.cantidad}</td>
-                    <td className="py-2 px-4">
-                    ₡{detalle.precio_unitario.toFixed(2)}
-                    </td>
-                    <td className="py-2 px-4">
-                    ₡{(detalle.cantidad * detalle.precio_unitario).toFixed(2)}
-                    </td>
+        {/* Paginación */}
+        <div className="flex justify-between items-center mt-6">
+          <button
+            className="bg-gray-500 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600"
+            onClick={() => setPaginaActual(paginaActual - 1)}
+            disabled={paginaActual === 1}
+          >
+            Anterior
+          </button>
+          <span>Página {paginaActual} de {totalPaginas}</span>
+          <button
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+            onClick={() => setPaginaActual(paginaActual + 1)}
+            disabled={paginaActual === totalPaginas}
+          >
+            Siguiente
+          </button>
+        </div>
+
+        {/* Modal de Detalles de la Factura */}
+        {mostrarModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded shadow-md">
+              <h3 className="text-xl font-bold mb-4">
+                Detalles de la Factura #{facturaSeleccionada}
+              </h3>
+              <p className="mb-2">
+                <strong>Cliente:</strong> {cliente}
+              </p>
+              <table className="min-w-full bg-white border border-gray-300">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="py-2 px-4 text-left">Producto ID</th>
+                    <th className="py-2 px-4 text-left">Producto</th>
+                    <th className="py-2 px-4 text-left">Cantidad</th>
+                    <th className="py-2 px-4 text-left">Precio Unitario</th>
+                    <th className="py-2 px-4 text-left">Subtotal</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {detallesFactura.map((detalle, index) => (
+                    <tr key={index} className="border-b border-gray-200">
+                      <td className="py-2 px-4">{detalle.producto_id}</td>
+                      <td className="py-2 px-4">{detalle.productos.nombre}</td>
+                      <td className="py-2 px-4">{detalle.cantidad}</td>
+                      <td className="py-2 px-4">
+                        ₡{detalle.precio_unitario.toFixed(2)}
+                      </td>
+                      <td className="py-2 px-4">
+                        ₡{(detalle.cantidad * detalle.precio_unitario).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button
+                className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                onClick={cerrarModal}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         )}
       </div>

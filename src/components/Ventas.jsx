@@ -280,26 +280,45 @@ const seleccionarCliente = (clienteSeleccionado) => {
 
   const procesarVenta = async () => {
     try {
+      // Verificar el stock para cada producto
+      for (const prod of productos) {
+        const { data: producto, error: productoError } = await supabase
+          .from("productos")
+          .select("stock")
+          .eq("id", prod.id)
+          .single();
+  
+        if (productoError) throw productoError;
+  
+        if (producto.stock < prod.cantidad) {
+          throw new Error(
+            `No hay suficiente stock para el producto ${prod.nombre}. Stock disponible: ${producto.stock}`
+          );
+        }
+      }
+  
+      // Insertar la venta en la tabla 'ventas'
       const { data: venta, error: ventaError } = await supabase
         .from("ventas")
         .insert([
           {
             fecha: new Date().toISOString(),
             id_cliente: cliente.id_cliente,
-            nombre_cliente:cliente.nombre,
+            nombre_cliente: cliente.nombre,
             id_empleado: cliente.id_empleado,
             total: total,
           },
         ])
         .select()
         .single();
-
+  
       if (ventaError) throw ventaError;
-
+  
       if (!venta || !venta.id) {
         throw new Error("No se pudo obtener el ID de la venta");
       }
-
+  
+      // Insertar los detalles de la venta y actualizar el stock de cada producto
       const detalleVentaPromises = productos.map(async (prod) => {
         const { error: detalleVentaError } = await supabase
           .from("detalles_ventas")
@@ -311,19 +330,42 @@ const seleccionarCliente = (clienteSeleccionado) => {
               precio_unitario: prod.precio,
             },
           ]);
-
+  
         if (detalleVentaError) throw detalleVentaError;
+  
+        // Obtener el stock actual
+        const { data: producto, error: productoError } = await supabase
+          .from("productos")
+          .select("stock")
+          .eq("id", prod.id)
+          .single();
+  
+        if (productoError) throw productoError;
+  
+        // Calcular el nuevo stock
+        const nuevoStock = producto.stock - prod.cantidad;
+  
+        // Actualizar el stock del producto
+        const { error: stockError } = await supabase
+          .from("productos")
+          .update({ stock: nuevoStock })
+          .eq("id", prod.id);
+  
+        if (stockError) throw stockError;
       });
-
+  
+      // Esperar a que todas las inserciones y actualizaciones del stock se completen
       await Promise.all(detalleVentaPromises);
+  
       alert("Venta procesada con éxito");
       setProductos([]);
       setTotal(0);
     } catch (error) {
       console.error("Error al procesar la venta:", error.message);
-      alert("Hubo un error al procesar la venta.");
+      alert(`Hubo un error al procesar la venta: ${error.message}`);
     }
   };
+  
 
   const eliminarFila = (index) => {
     const productosActualizados = productos.filter((_, i) => i !== index);
@@ -362,6 +404,37 @@ const seleccionarCliente = (clienteSeleccionado) => {
       eliminarFila(index); // Si la cantidad es 1, se elimina el producto
     }
   };
+
+
+  const verificarStock = async (productoId, cantidadVendida) => {
+    const { data, error } = await supabase
+      .from('productos')
+      .select('stock')
+      .eq('id', productoId)
+      .single();
+  
+    if (error) {
+      console.error("Error al verificar el stock:", error.message);
+      return false;
+    }
+  
+    const stockDisponible = data.stock;
+  
+    if (cantidadVendida > stockDisponible) {
+      Swal.fire({
+        title: 'Error',
+        text: `No puedes vender más de lo que hay en stock. Stock disponible: ${stockDisponible}`,
+        icon: 'error',
+        confirmButtonText: 'OK',
+      });
+      return false;
+    }
+  
+    return true;
+  };
+  
+
+
 
   return (
     <>
