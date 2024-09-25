@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../utils/supaBaseClient"; // Importa supabase
 import SideBar from "./SideBar";
 import BarraUsuario from "./BarraUsuario";
@@ -25,6 +25,31 @@ const Ventas = () => {
   const [total, setTotal] = useState(0);
   const [productosSugeridos, setProductosSugeridos] = useState([]);
   const [clientesSugeridos, setClientesSugeridos] = useState([]);
+
+
+  useEffect(() => {
+    const cargarClienteContado = async () => {
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("nombre", "Contado")
+        .single();
+
+      if (error) {
+        console.error('Error al cargar el cliente "Contado":', error.message);
+      } else if (data) {
+        setCliente({
+          id_cliente: data.id, // Asegúrate de que este es el nombre correcto del campo ID en tu tabla
+          nombre: data.nombre,
+        });
+      }
+    };
+
+    cargarClienteContado();
+  }, []);
+
+
+
   // Filtrar productos por nombre
   const filtrarPorNombre = async (nombre) => {
     const { data, error } = await supabase
@@ -280,23 +305,28 @@ const seleccionarCliente = (clienteSeleccionado) => {
 
   const procesarVenta = async () => {
     try {
+      // Verificar que el cliente tenga un ID válido
+      if (!cliente.id_cliente || !cliente.nombre) {
+        throw new Error("No se ha seleccionado un cliente válido.");
+      }
+
       // Verificar el stock para cada producto
       for (const prod of productos) {
-        const { data: producto, error: productoError } = await supabase
+        const { data: productoData, error: productoError } = await supabase
           .from("productos")
           .select("stock")
           .eq("id", prod.id)
           .single();
-  
+
         if (productoError) throw productoError;
-  
-        if (producto.stock < prod.cantidad) {
+
+        if (productoData.stock < prod.cantidad) {
           throw new Error(
-            `No hay suficiente stock para el producto ${prod.nombre}. Stock disponible: ${producto.stock}`
+            `No hay suficiente stock para el producto ${prod.nombre}. Stock disponible: ${productoData.stock}`
           );
         }
       }
-  
+
       // Insertar la venta en la tabla 'ventas'
       const { data: venta, error: ventaError } = await supabase
         .from("ventas")
@@ -305,19 +335,19 @@ const seleccionarCliente = (clienteSeleccionado) => {
             fecha: new Date().toISOString(),
             id_cliente: cliente.id_cliente,
             nombre_cliente: cliente.nombre,
-            id_empleado: cliente.id_empleado,
+            id_empleado: cliente.id_empleado, // Asegúrate de que 'id_empleado' está definido
             total: total,
           },
         ])
         .select()
         .single();
-  
+
       if (ventaError) throw ventaError;
-  
+
       if (!venta || !venta.id) {
         throw new Error("No se pudo obtener el ID de la venta");
       }
-  
+
       // Insertar los detalles de la venta y actualizar el stock de cada producto
       const detalleVentaPromises = productos.map(async (prod) => {
         const { error: detalleVentaError } = await supabase
@@ -330,42 +360,48 @@ const seleccionarCliente = (clienteSeleccionado) => {
               precio_unitario: prod.precio,
             },
           ]);
-  
+
         if (detalleVentaError) throw detalleVentaError;
-  
+
         // Obtener el stock actual
-        const { data: producto, error: productoError } = await supabase
+        const { data: productoData, error: productoError } = await supabase
           .from("productos")
           .select("stock")
           .eq("id", prod.id)
           .single();
-  
+
         if (productoError) throw productoError;
-  
+
         // Calcular el nuevo stock
-        const nuevoStock = producto.stock - prod.cantidad;
-  
+        const nuevoStock = productoData.stock - prod.cantidad;
+
         // Actualizar el stock del producto
         const { error: stockError } = await supabase
           .from("productos")
           .update({ stock: nuevoStock })
           .eq("id", prod.id);
-  
+
         if (stockError) throw stockError;
       });
-  
+
       // Esperar a que todas las inserciones y actualizaciones del stock se completen
       await Promise.all(detalleVentaPromises);
-  
+
       alert("Venta procesada con éxito");
       setProductos([]);
       setTotal(0);
+
+      // **Restablecer el cliente a "Contado" después de la venta**
+      setCliente({
+        id_cliente: cliente.id_cliente,
+        nombre: cliente.nombre,
+      });
     } catch (error) {
       console.error("Error al procesar la venta:", error.message);
       alert(`Hubo un error al procesar la venta: ${error.message}`);
     }
   };
-  
+
 
   const eliminarFila = (index) => {
     const productosActualizados = productos.filter((_, i) => i !== index);
@@ -444,7 +480,7 @@ const seleccionarCliente = (clienteSeleccionado) => {
         <main className="flex-1 p-4">
           <section className="mb-4">
             <div className="flex space-x-8">
-              <div>
+            <div>
                 <label className="block">ID</label>
                 <input
                   type="number"
@@ -455,19 +491,19 @@ const seleccionarCliente = (clienteSeleccionado) => {
                   }
                   className="w-12 border p-2"
                   placeholder="ID"
+                  readOnly // **Evita que se modifique el ID del cliente "Contado"**
                 />
               </div>
               <div>
                 <label className="block">Cliente</label>
                 <input
-  type="text"
-  name="nombre"
-  value={cliente.nombre}
-  onChange={handleClienteChange}
-  className="w-full border p-2"
-  placeholder="Nombre del cliente"
-/>
-
+                  type="text"
+                  name="nombre"
+                  value={cliente.nombre}
+                  onChange={handleClienteChange}
+                  className="w-full border p-2"
+                  placeholder="Nombre del cliente"
+                />
               </div>
             </div>
                         {/* Lista de clientes sugeridos */}
